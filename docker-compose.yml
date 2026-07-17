@@ -1,0 +1,56 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://app:password@postgres:5432/appdb"
+      PORT: "3000"
+      JWT_ACCESS_SECRET: "local-development-access-secret-change-me"
+      JWT_REFRESH_SECRET: "local-development-refresh-secret-change-me"
+      SMTP_URL: "smtp://mailpit:1025"
+      TRAFFIC_DEMO_MODE: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health/live').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    build: ./backend
+    command: ["node", "dist/src/worker.js"]
+    environment:
+      DATABASE_URL: "postgresql://app:password@postgres:5432/appdb"
+      JWT_ACCESS_SECRET: "local-development-access-secret-change-me"
+      JWT_REFRESH_SECRET: "local-development-refresh-secret-change-me"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgis/postgis:18-3.6
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+volumes:
+  postgres_data:
