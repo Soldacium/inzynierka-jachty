@@ -50,7 +50,7 @@ export function RouteEditorMap({ points, selectedIndex, ports, alerts, mapStyleU
       <Layer id="editor-port-clusters" type="circle" source="editor-ports" filter={['has', 'point_count']} paint={{ 'circle-color': '#0369A1', 'circle-radius': 15, 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 2 }} />
       <Layer id="editor-ports-layer" type="circle" source="editor-ports" filter={['!', ['has', 'point_count']]} paint={{ 'circle-color': '#0891B2', 'circle-radius': 7, 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 2 }} />
     </GeoJSONSource>
-    <GeoJSONSource id="editor-alerts" data={alertPoints}><Layer id="editor-alerts-layer" type="circle" source="editor-alerts" paint={{ 'circle-color': '#DC2626', 'circle-radius': 6, 'circle-opacity': 0.8 }} /></GeoJSONSource>
+    <GeoJSONSource id="editor-alerts" data={alertPoints}><Layer id="editor-alerts-layer" type="circle" source="editor-alerts" paint={{ 'circle-color': ['match', ['get', 'source'], 'official', '#B91C1C', '#D97706'], 'circle-radius': 7, 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1.5 }} /></GeoJSONSource>
     <GeoJSONSource id="editor-route-line" data={routeLine}><Layer id="editor-route-line-layer" type="line" source="editor-route-line" paint={{ 'line-color': '#7C3AED', 'line-width': 4 }} /></GeoJSONSource>
     <GeoJSONSource id="editor-route-points" data={routePoints} onPress={selectPoint} hitbox={{ top: 18, right: 18, bottom: 18, left: 18 }}>
       <Layer id="editor-route-points-layer" type="circle" source="editor-route-points" paint={{ 'circle-color': ['case', ['get', 'selected'], '#DC2626', '#7C3AED'], 'circle-radius': ['case', ['get', 'selected'], 11, 8], 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 3 }} />

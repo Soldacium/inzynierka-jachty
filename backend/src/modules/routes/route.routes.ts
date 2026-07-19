@@ -73,9 +73,21 @@ export function routeRouter(context: AppContext): Router {
       const repository = manager.getRepository(SailingRoute);
       const route = await repository.findOneByOrFail({ id, userId: request.auth!.id });
       if (input.name !== undefined) route.name = input.name;
-      if (input.status !== undefined) route.status = input.status;
-      if (input.startedAt !== undefined) route.startedAt = input.startedAt;
-      if (input.finishedAt !== undefined) route.finishedAt = input.finishedAt;
+      if (input.status === RouteStatus.Active) {
+        const now = new Date();
+        await repository.createQueryBuilder().update()
+          .set({ status: RouteStatus.Completed, finishedAt: now })
+          .where('user_id = :userId AND id != :id AND status = :status', { userId: request.auth!.id, id, status: RouteStatus.Active })
+          .execute();
+        route.status = RouteStatus.Active;
+        route.startedAt = input.startedAt ?? route.startedAt ?? now;
+        route.finishedAt = null;
+      } else if (input.status !== undefined) {
+        route.status = input.status;
+        if (input.status === RouteStatus.Completed) route.finishedAt = input.finishedAt ?? route.finishedAt ?? new Date();
+      }
+      if (input.startedAt !== undefined && input.status !== RouteStatus.Active) route.startedAt = input.startedAt;
+      if (input.finishedAt !== undefined && input.status !== RouteStatus.Active) route.finishedAt = input.finishedAt;
       if (input.points) {
         const path = lineFrom(input.points);
         route.path = path;

@@ -4,7 +4,7 @@ import { env } from '../config/env.js';
 export async function runMaintenance(dataSource: DataSource): Promise<void> {
   await dataSource.transaction(async (manager) => {
     await manager.query(`UPDATE alerts SET status = 'expired', updated_at = now() WHERE valid_until < now() AND status IN ('pending', 'confirmed')`);
-    await manager.query(`DELETE FROM location_samples WHERE recorded_at < now() - ($1 * interval '1 day')`, [env.LOCATION_RETENTION_DAYS]);
+    await manager.query(`DELETE FROM location_samples WHERE route_id IS NULL AND recorded_at < now() - ($1 * interval '1 day')`, [env.LOCATION_RETENTION_DAYS]);
     await manager.query(`DELETE FROM traffic_cells WHERE bucket_start < now() - ($1 * interval '1 day')`, [env.TRAFFIC_RETENTION_DAYS]);
     await manager.query(`DELETE FROM refresh_tokens WHERE expires_at < now() OR (revoked_at IS NOT NULL AND revoked_at < now() - interval '7 days')`);
     await manager.query(`DELETE FROM password_reset_tokens WHERE expires_at < now() OR used_at IS NOT NULL`);

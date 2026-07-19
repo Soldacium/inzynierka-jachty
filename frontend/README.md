@@ -1,6 +1,6 @@
 # Na Fali — aplikacja mobilna
 
-Frontend aplikacji żeglarskiej zbudowany w Expo SDK 54, React Native i Expo Router. Obejmuje mapę portów i ostrzeżeń, śledzenie rejsu w tle, planowanie tras, komunikator oraz panel zarządcy portu.
+Frontend aplikacji żeglarskiej zbudowany w Expo SDK 54, React Native i Expo Router. Obejmuje mapę portów i ostrzeżeń, anonimowe udostępnianie pozycji łodzi w tle, planowanie tras, komunikator oraz panel zarządcy portu.
 
 ## Uruchomienie
 

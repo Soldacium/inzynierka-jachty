@@ -12,17 +12,15 @@ export async function startTracking(): Promise<TrackingStartResult> {
   if (background.status !== 'granted') return 'background_denied';
   if (!await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK)) {
     await Location.startLocationUpdatesAsync(LOCATION_TASK, {
-      accuracy: Location.Accuracy.BestForNavigation,
-      timeInterval: 10_000,
-      distanceInterval: 25,
-      deferredUpdatesInterval: 30_000,
-      deferredUpdatesDistance: 50,
+      accuracy: Location.Accuracy.High,
+      timeInterval: 60_000,
+      deferredUpdatesInterval: 60_000,
       activityType: Location.ActivityType.OtherNavigation,
       pausesUpdatesAutomatically: false,
       showsBackgroundLocationIndicator: true,
       foregroundService: {
-        notificationTitle: 'Na Fali — aktywny rejs',
-        notificationBody: 'Pozycja jest udostępniana. Dotknij, aby wrócić do aplikacji.',
+        notificationTitle: 'Na Fali — udostępnianie pozycji',
+        notificationBody: 'Anonimowa pozycja łodzi jest aktualizowana w tle.',
         notificationColor: '#0369A1',
       },
     });
@@ -40,5 +38,10 @@ export async function currentPosition(): Promise<Location.LocationObject> {
   const permission = await Location.requestForegroundPermissionsAsync();
   if (permission.status !== 'granted') throw new Error('LOCATION_PERMISSION_DENIED');
   return Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+}
+export async function lastKnownPosition(): Promise<Location.LocationObject | null> {
+  const permission = await Location.getForegroundPermissionsAsync();
+  if (permission.status !== 'granted') return null;
+  return Location.getLastKnownPositionAsync();
 }
 export async function revokeLocalTracking(): Promise<void> { await stopTracking(); await clearLocationQueue(); }

@@ -10,6 +10,8 @@ services:
       JWT_REFRESH_SECRET: "local-development-refresh-secret-change-me"
       SMTP_URL: "smtp://mailpit:1025"
       TRAFFIC_DEMO_MODE: "true"
+      DEMO_ADMIN_ENABLED: "true"
+      TRAFFIC_SIMULATION_INTERVAL_MS: "10000"
     depends_on:
       postgres:
         condition: service_healthy

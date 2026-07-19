@@ -67,9 +67,9 @@ export class User {
   @Column({ type: 'varchar', length: 120 }) displayName!: string;
   @Column({ type: 'enum', enum: UserRole, default: UserRole.Sailor }) role!: UserRole;
   @Column({ name: 'is_blocked', type: 'boolean', default: false }) isBlocked!: boolean;
-  @Column({ name: 'location_consent', type: 'boolean', default: false }) locationConsent!: boolean;
+  @Column({ name: 'location_consent', type: 'boolean', default: true }) locationConsent!: boolean;
   @Column({ name: 'location_consent_at', type: 'timestamptz', nullable: true }) locationConsentAt!: Date | null;
-  @Column({ name: 'share_active_position', type: 'boolean', default: false }) shareActivePosition!: boolean;
+  @Column({ name: 'share_active_position', type: 'boolean', default: true }) shareActivePosition!: boolean;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt!: Date;
   @OneToMany(() => RefreshToken, (token) => token.user) refreshTokens!: RefreshToken[];
@@ -198,6 +198,8 @@ export class LocationSample {
   @PrimaryGeneratedColumn('uuid') id!: string;
   @Index() @Column({ name: 'user_id', type: 'uuid' }) userId!: string;
   @ManyToOne(() => User, { onDelete: 'CASCADE' }) @JoinColumn({ name: 'user_id' }) user!: User;
+  @Index() @Column({ name: 'route_id', type: 'uuid', nullable: true }) routeId!: string | null;
+  @ManyToOne(() => SailingRoute, { onDelete: 'SET NULL', nullable: true }) @JoinColumn({ name: 'route_id' }) route!: SailingRoute | null;
   @Column({ name: 'client_generated_id', type: 'uuid' }) clientGeneratedId!: string;
   @Index({ spatial: true }) @Column({ type: 'geometry', spatialFeatureType: 'Point', srid: 4326 }) location!: Point;
   @Column({ type: 'real' }) accuracy!: number;

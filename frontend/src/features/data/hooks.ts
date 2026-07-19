@@ -1,12 +1,33 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, queryString } from '@/src/api/client';
-import { useAuthStore } from '@/src/stores/auth.store';
-import type { Alert, AlertSource, ApiList, Conversation, MapBounds, Message, Port, PortNotice, SailRoute, TrafficCell, TrafficPoint, TrafficResponse, User } from '@/src/types/api';
+import type { Alert, AlertSource, ApiList, Conversation, MapBounds, Message, Port, PortNotice, SailRoute, TrafficCell, TrafficPoint, TrafficResponse, TrafficSimulationStatus } from '@/src/types/api';
 
-export function usePorts(search = '', bounds?: Omit<MapBounds, 'zoom'>) {
-  return useQuery({ queryKey: ['ports', search, bounds], queryFn: () => api.get<ApiList<Port>>(`/ports${queryString({ search, ...bounds })}`), placeholderData: keepPreviousData });
+async function getAllPages<T>(path: string, parameters: Record<string, string | number | undefined>): Promise<ApiList<T>> {
+  const items: T[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await api.get<ApiList<T>>(`${path}${queryString({ ...parameters, cursor, limit: 100 })}`);
+    items.push(...page.items);
+    cursor = page.nextCursor ?? undefined;
+  } while (cursor);
+  return { items, nextCursor: null };
 }
-export function usePort(id?: string) { return useQuery({ queryKey: ['ports', id], queryFn: () => api.get<Port>(`/ports/${id}`), enabled: Boolean(id) }); }
+
+export function usePorts(search = '') {
+  return useQuery({ queryKey: ['ports', 'global', search], queryFn: () => getAllPages<Port>('/ports', { search }), placeholderData: keepPreviousData });
+}
+export function useViewportPorts(bounds: Omit<MapBounds, 'zoom'>) {
+  return useQuery({ queryKey: ['ports', 'viewport', bounds], queryFn: () => getAllPages<Port>('/ports', bounds), placeholderData: keepPreviousData });
+}
+export function useInfinitePorts(search = '') {
+  return useInfiniteQuery({
+    queryKey: ['ports', 'list', search],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) => api.get<ApiList<Port>>(`/ports${queryString({ search, cursor: pageParam, limit: 25 })}`),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+}
+export function usePort(id?: string) { return useQuery({ queryKey: ['ports', id], queryFn: () => api.get<Port>(`/ports/${id}`), enabled: Boolean(id), refetchInterval: 120_000 }); }
 export function usePortNotices(id?: string) { return useQuery({ queryKey: ['ports', id, 'notices'], queryFn: () => api.get<ApiList<PortNotice>>(`/ports/${id}/notices`), enabled: Boolean(id) }); }
 export function useManagedPorts(enabled = true) { return useQuery({ queryKey: ['managed-ports'], queryFn: () => api.get<ApiList<Port>>('/ports/managed'), enabled }); }
 export function useUpdatePort(portId?: string) {
@@ -21,8 +42,20 @@ export function useUpdatePort(portId?: string) {
   });
 }
 
-export function useAlerts(bounds?: Omit<MapBounds, 'zoom'>, source?: AlertSource) {
-  return useQuery({ queryKey: ['alerts', bounds, source], queryFn: () => api.get<ApiList<Alert>>(`/alerts${queryString({ ...(bounds ?? {}), source })}`), placeholderData: keepPreviousData, refetchInterval: 60_000 });
+export function useAlerts(source?: AlertSource) {
+  return useQuery({ queryKey: ['alerts', 'global', source], queryFn: () => getAllPages<Alert>('/alerts', { source }), placeholderData: keepPreviousData, refetchInterval: 60_000 });
+}
+export function useViewportAlerts(bounds: Omit<MapBounds, 'zoom'>, source?: AlertSource) {
+  return useQuery({ queryKey: ['alerts', 'viewport', bounds, source], queryFn: () => getAllPages<Alert>('/alerts', { ...bounds, source }), placeholderData: keepPreviousData, refetchInterval: 60_000 });
+}
+export function useInfiniteAlerts(source?: AlertSource) {
+  return useInfiniteQuery({
+    queryKey: ['alerts', 'list', source],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) => api.get<ApiList<Alert>>(`/alerts${queryString({ source, cursor: pageParam, limit: 25 })}`),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    refetchInterval: 60_000,
+  });
 }
 export function useCreateAlert() {
   const client = useQueryClient();
@@ -35,8 +68,27 @@ export function useTraffic(bounds: MapBounds, mode: 'points' | 'heatmap', enable
     queryKey: ['traffic', mode, bounds],
     queryFn: () => api.get<TrafficResponse<TrafficPoint | TrafficCell>>(`${endpoint}${queryString({ ...bounds })}`),
     enabled,
-    placeholderData: keepPreviousData,
-    refetchInterval: 30_000,
+    refetchInterval: mode === 'points' ? 30_000 : 120_000,
+  });
+}
+
+export function useTrafficSimulation(enabled = true) {
+  return useQuery({
+    queryKey: ['admin', 'traffic-simulation'],
+    queryFn: () => api.get<TrafficSimulationStatus>('/admin/traffic-simulation'),
+    enabled,
+    refetchInterval: enabled ? 30_000 : false,
+  });
+}
+
+export function useResetTrafficSimulation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<TrafficSimulationStatus>('/admin/traffic-simulation/reset'),
+    onSuccess: (status) => {
+      client.setQueryData(['admin', 'traffic-simulation'], status);
+      void client.invalidateQueries({ queryKey: ['traffic'] });
+    },
   });
 }
 
@@ -50,6 +102,16 @@ export function useDeleteRoute() {
   const client = useQueryClient();
   return useMutation({ mutationFn: (id: string) => api.delete(`/routes/${id}`), onSuccess: () => client.invalidateQueries({ queryKey: ['routes'] }) });
 }
+export function useUpdateRoute(id?: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Partial<Pick<SailRoute, 'status' | 'startedAt' | 'finishedAt'>>) => api.patch<SailRoute>(`/routes/${id}`, input),
+    onSuccess: (route) => {
+      client.setQueryData(['routes', id], route);
+      void client.invalidateQueries({ queryKey: ['routes'] });
+    },
+  });
+}
 
 export function useConversations() { return useQuery({ queryKey: ['conversations'], queryFn: () => api.get<ApiList<Conversation>>('/conversations') }); }
 export function useMessages(id?: string) { return useQuery({ queryKey: ['conversations', id, 'messages'], queryFn: () => api.get<ApiList<Message>>(`/conversations/${id}/messages`), enabled: Boolean(id), refetchInterval: 30_000 }); }
@@ -62,12 +124,6 @@ export function useSendMessage(id?: string) {
   return useMutation({ mutationFn: (body: string) => api.post<Message>(`/conversations/${id}/messages`, { body }), onSuccess: () => client.invalidateQueries({ queryKey: ['conversations', id, 'messages'] }) });
 }
 export function useMarkConversationRead(id?: string) { return useMutation({ mutationFn: () => api.post(`/conversations/${id}/read`) }); }
-
-export function useUpdatePrivacy() {
-  const updateUser = useAuthStore((state) => state.updateUser);
-  return useMutation({ mutationFn: (input: { locationConsent: boolean; shareActivePosition: boolean }) => api.patch<User>('/users/me/privacy', input), onSuccess: updateUser });
-}
-export function useDeleteLocationHistory() { return useMutation({ mutationFn: () => api.delete('/users/me/location-history') }); }
 
 export function useUpdateAvailability(portId?: string) {
   const client = useQueryClient();

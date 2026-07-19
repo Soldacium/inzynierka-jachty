@@ -33,9 +33,18 @@ describe('traffic privacy and levels', () => {
 
   it('anchors demo vessels to geography instead of the requested viewport', () => {
     const first = demoTrafficPoints({ north: 55, south: 54, east: 19, west: 18 })
-      .find((point) => point.vesselId === 'demo-gdynia-0');
+      .find((point) => point.vesselId === 'demo-gdynia-1');
     const shifted = demoTrafficPoints({ north: 55.2, south: 54.2, east: 19.2, west: 18.2 })
-      .find((point) => point.vesselId === 'demo-gdynia-0');
+      .find((point) => point.vesselId === 'demo-gdynia-1');
     expect(shifted).toMatchObject({ latitude: first?.latitude, longitude: first?.longitude });
+  });
+
+  it('moves the same vessels deterministically as simulation ticks advance', () => {
+    const bounds = { north: 55, south: 54, east: 19, west: 18 };
+    const initial = demoTrafficPoints(bounds, 0)[0];
+    const moved = demoTrafficPoints(bounds, 5)[0];
+    expect(moved?.vesselId).toBe(initial?.vesselId);
+    expect(moved?.longitude).not.toBe(initial?.longitude);
+    expect(moved?.latitude).not.toBe(initial?.latitude);
   });
 });

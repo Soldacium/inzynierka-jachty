@@ -4,6 +4,7 @@ import type { AppContext } from '../../app-context.js';
 import { asyncHandler } from '../../common/async-handler.js';
 import { AppError } from '../../common/errors.js';
 import { bboxSchema, bboxSql, coordinateSchema, point } from '../../common/geo.js';
+import { paginated, paginationSchema } from '../../common/pagination.js';
 import { Port, PortAvailability, PortFacility, PortNotice, PortStatus, UserRole } from '../../database/entities.js';
 import { requireRole } from '../auth/auth.middleware.js';
 import { requirePortManager } from './port.access.js';
@@ -36,13 +37,24 @@ async function portDetails(context: AppContext, id: string) {
 export function portRouter(context: AppContext): Router {
   const router = Router();
   router.get('/', asyncHandler(async (request, response) => {
-    const query = bboxSchema.and(z.object({ search: z.string().trim().max(160).optional() })).parse(request.query);
-    const builder = context.dataSource.getRepository(Port).createQueryBuilder('port')
+    const query = bboxSchema.and(paginationSchema).and(z.object({ search: z.string().trim().max(160).optional() })).parse(request.query);
+    const repository = context.dataSource.getRepository(Port);
+    const builder = repository.createQueryBuilder('port')
       .where('port.status = :status', { status: PortStatus.Active })
-      .orderBy('port.name', 'ASC').limit(200);
+      .orderBy('port.name', 'ASC')
+      .addOrderBy('port.id', 'ASC')
+      .limit(query.limit + 1);
     if (query.search) builder.andWhere('port.name ILIKE :search', { search: `%${query.search}%` });
     if (query.north !== undefined) builder.andWhere(bboxSql('port'), query);
-    response.json({ items: await builder.getMany() });
+    if (query.cursor) {
+      const cursor = await repository.findOne({ select: { id: true, name: true }, where: { id: query.cursor, status: PortStatus.Active } });
+      if (!cursor) throw new AppError(400, 'INVALID_CURSOR', 'Pagination cursor is invalid.');
+      builder.andWhere('(port.name > :cursorName OR (port.name = :cursorName AND port.id > :cursorId))', {
+        cursorName: cursor.name,
+        cursorId: cursor.id,
+      });
+    }
+    response.json(paginated(await builder.getMany(), query.limit));
   }));
   router.get('/managed', requireRole(UserRole.PortManager, UserRole.Admin), asyncHandler(async (request, response) => {
     const builder = context.dataSource.getRepository(Port).createQueryBuilder('port')

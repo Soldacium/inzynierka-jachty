@@ -49,6 +49,9 @@ export class AuthService {
       displayName: input.displayName.trim(),
       passwordHash: await argon2.hash(input.password, { type: argon2.argon2id }),
       role: UserRole.Sailor,
+      locationConsent: true,
+      locationConsentAt: new Date(),
+      shareActivePosition: true,
     });
     await users.save(user);
     return { user: publicUser(user), tokens: await this.issueSession(user) };

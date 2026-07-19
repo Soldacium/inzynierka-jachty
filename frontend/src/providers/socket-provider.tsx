@@ -3,7 +3,7 @@ import { io, type Socket } from 'socket.io-client';
 import { config } from '@/src/config/env';
 import { getSessionTokens } from '@/src/services/session';
 import { useAuthStore } from '@/src/stores/auth.store';
-import { queryClient } from './app-providers';
+import { queryClient } from './query-client';
 
 const SocketContext = createContext<Socket | null>(null);
 const socketOrigin = config.apiUrl.replace(/\/api\/v1\/?$/, '');
@@ -14,16 +14,17 @@ export function SocketProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (!socket) return;
     const invalidate = (key: string) => { void queryClient.invalidateQueries({ queryKey: [key] }); };
-    socket.on('connect', () => { socket.emit('scope:join', { type: 'alerts' }); socket.emit('scope:join', { type: 'traffic' }); });
+    socket.on('connect', () => { socket.emit('scope:join', { type: 'alerts' }); });
     socket.on('port:availability_updated', () => invalidate('ports'));
     socket.on('port:notice_created', () => invalidate('ports'));
     socket.on('alert:created', () => invalidate('alerts'));
     socket.on('alert:updated', () => invalidate('alerts'));
-    socket.on('traffic:points_updated', () => invalidate('traffic'));
-    socket.on('traffic:heatmap_updated', () => invalidate('traffic'));
     socket.on('message:created', () => invalidate('conversations'));
     socket.connect();
-    return () => { socket.removeAllListeners(); socket.disconnect(); };
+    return () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+    };
   }, [socket]);
   return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;
 }

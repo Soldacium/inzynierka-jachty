@@ -8,13 +8,13 @@ import { colors, spacing } from '@/src/constants/theme';
 import { useAuthStore } from '@/src/stores/auth.store';
 import { errorMessage } from '@/src/utils/format';
 
-const schema = z.object({ email: z.email('Podaj poprawny adres e-mail.'), password: z.string().min(10, 'Hasło musi mieć co najmniej 10 znaków.') });
+const schema = z.object({ email: z.email('Podaj poprawny adres e-mail.'), password: z.string() });
 
 export default function LoginScreen() {
   const login = useAuthStore((state) => state.login);
   const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   const submit = async () => {
-    const parsed = schema.safeParse({ email, password });
+    const parsed = schema.safeParse({ email: email.trim().toLowerCase(), password });
     if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? 'Sprawdź formularz.'); return; }
     setBusy(true); setError('');
     try { await login(parsed.data.email, parsed.data.password); } catch (reason) { setError(errorMessage(reason)); } finally { setBusy(false); }

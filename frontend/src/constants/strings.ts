@@ -12,8 +12,8 @@ export const strings = {
   email: 'Adres e-mail',
   password: 'Hasło',
   displayName: 'Nazwa użytkownika',
-  permissionLocationTitle: 'Lokalizacja podczas rejsu',
-  permissionLocationBody: 'Najpierw poprosimy o dostęp podczas używania aplikacji, a następnie — tylko dla aktywnego rejsu — o dostęp w tle.',
+  permissionLocationTitle: 'Anonimowa pozycja łodzi',
+  permissionLocationBody: 'Aplikacja poprosi o dostęp podczas używania oraz w tle, aby okresowo aktualizować anonimową pozycję łodzi.',
   sharingActive: 'Udostępnianie pozycji jest aktywne',
-  sharingStopped: 'Udostępnianie pozycji jest wyłączone',
+  sharingStopped: 'Brak systemowego dostępu do lokalizacji',
 };

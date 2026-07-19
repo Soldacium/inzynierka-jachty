@@ -47,14 +47,25 @@ export interface Alert {
 }
 
 export interface TrafficPoint {
-  vesselId: string; latitude: number; longitude: number; accuracy: number; speed: number | null; heading: number | null; recordedAt: string;
+  vesselId: string; displayName?: string; latitude: number; longitude: number; accuracy: number; speed: number | null; heading: number | null; recordedAt: string;
 }
 export interface TrafficCell {
   latitude: number; longitude: number; weight: number; sampleCount: number; uniqueUsers: number; level: 'low' | 'medium' | 'high';
 }
 export interface TrafficResponse<T> {
   items: T[]; calculatedAt: string; minimumUsers?: number; demo?: boolean;
+  simulation?: TrafficSimulationStatus;
   debug?: { gridSize: number; privacyThreshold: number; bucketMinutes: number };
+}
+
+export interface TrafficSimulationStatus {
+  available: boolean;
+  running: boolean;
+  tick: number;
+  vesselCount: number;
+  intervalMs: number;
+  startedAt: string | null;
+  calculatedAt: string;
 }
 
 export interface Conversation { id: string; portId: string; port?: Port; createdAt: string; updatedAt: string }

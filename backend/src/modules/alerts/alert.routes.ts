@@ -4,6 +4,7 @@ import type { AppContext } from '../../app-context.js';
 import { asyncHandler } from '../../common/async-handler.js';
 import { AppError } from '../../common/errors.js';
 import { bboxSchema, bboxSql, coordinateSchema, point } from '../../common/geo.js';
+import { paginated, paginationSchema } from '../../common/pagination.js';
 import { Alert, AlertSeverity, AlertSource, AlertStatus, UserRole } from '../../database/entities.js';
 import { requirePortManager } from '../ports/port.access.js';
 import { alertSourceForRole, enforceAlertQuota } from './alert.service.js';
@@ -20,14 +21,25 @@ const alertInput = z.object({
 export function alertRouter(context: AppContext): Router {
   const router = Router();
   router.get('/', asyncHandler(async (request, response) => {
-    const query = bboxSchema.and(z.object({ status: z.enum(AlertStatus).optional(), source: z.enum(AlertSource).optional() })).parse(request.query);
-    const builder = context.dataSource.getRepository(Alert).createQueryBuilder('alert')
+    const query = bboxSchema.and(paginationSchema).and(z.object({ status: z.enum(AlertStatus).optional(), source: z.enum(AlertSource).optional() })).parse(request.query);
+    const repository = context.dataSource.getRepository(Alert);
+    const builder = repository.createQueryBuilder('alert')
       .where('alert.status IN (:...statuses)', { statuses: query.status ? [query.status] : [AlertStatus.Pending, AlertStatus.Confirmed] })
       .andWhere('(alert.valid_until IS NULL OR alert.valid_until > now())')
-      .orderBy('alert.created_at', 'DESC').limit(500);
+      .orderBy('alert.created_at', 'DESC')
+      .addOrderBy('alert.id', 'DESC')
+      .limit(query.limit + 1);
     if (query.north !== undefined) builder.andWhere(bboxSql('alert'), query);
     if (query.source) builder.andWhere('alert.source = :source', { source: query.source });
-    response.json({ items: await builder.getMany() });
+    if (query.cursor) {
+      const cursor = await repository.findOne({ select: { id: true, createdAt: true }, where: { id: query.cursor } });
+      if (!cursor) throw new AppError(400, 'INVALID_CURSOR', 'Pagination cursor is invalid.');
+      builder.andWhere('(alert.created_at < :cursorCreatedAt OR (alert.created_at = :cursorCreatedAt AND alert.id < :cursorId))', {
+        cursorCreatedAt: cursor.createdAt,
+        cursorId: cursor.id,
+      });
+    }
+    response.json(paginated(await builder.getMany(), query.limit));
   }));
   router.post('/', asyncHandler(async (request, response) => {
     const input = alertInput.parse(request.body);

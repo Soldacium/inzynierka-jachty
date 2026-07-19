@@ -53,8 +53,8 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Na Fali używa lokalizacji, aby pokazać Twoją pozycję na mapie.",
-          "locationAlwaysAndWhenInUsePermission": "Na Fali zapisuje przebieg aktywnego rejsu również po zminimalizowaniu aplikacji.",
+          "locationWhenInUsePermission": "Na Fali używa GPS, aby pokazać Twoją pozycję i anonimową pozycję łodzi na mapie.",
+          "locationAlwaysAndWhenInUsePermission": "Na Fali co około minutę aktualizuje anonimową pozycję łodzi również po zminimalizowaniu aplikacji.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true

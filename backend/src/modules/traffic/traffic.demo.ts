@@ -1,65 +1,109 @@
 import { gridSizeForZoom, trafficLevel } from './traffic.service.js';
 
-interface Bounds { north: number; south: number; east: number; west: number }
-export interface DemoTrafficPoint {
-  vesselId: string; latitude: number; longitude: number; accuracy: number; speed: number; heading: number; recordedAt: string;
-}
+export interface Bounds { north: number; south: number; east: number; west: number }
 
-interface DemoCluster {
-  id: string;
+export interface DemoTrafficPoint {
+  vesselId: string;
+  displayName: string;
   latitude: number;
   longitude: number;
+  accuracy: number;
+  speed: number;
+  heading: number;
+  recordedAt: string;
+}
+
+export interface DemoVesselDefinition {
+  userId: string;
+  vesselId: string;
+  displayName: string;
+  email: string;
+}
+
+interface DemoFleet {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  latitudeRadius: number;
+  longitudeRadius: number;
+  phase: number;
+  angularSpeed: number;
   users: number;
 }
 
-// Fixed geographic locations are intentional. Generating these coordinates from
-// the requested viewport made the demo vessels appear glued to the screen while
-// panning and zooming the map.
-const demoClusters: DemoCluster[] = [
-  { id: 'gdynia', latitude: 54.55, longitude: 18.45, users: 4 },
-  { id: 'gdansk-roadstead', latitude: 54.48, longitude: 18.68, users: 9 },
-  { id: 'gulf-of-gdansk', latitude: 54.65, longitude: 18.83, users: 18 },
-  { id: 'swinoujscie', latitude: 53.92, longitude: 14.28, users: 9 },
-  { id: 'kolobrzeg', latitude: 54.20, longitude: 15.58, users: 4 },
-  { id: 'ustka', latitude: 54.60, longitude: 16.92, users: 9 },
-  { id: 'leba', latitude: 54.79, longitude: 17.58, users: 4 },
+const demoFleets: DemoFleet[] = [
+  { id: 'gdynia', name: 'Gdynia', latitude: 54.55, longitude: 18.62, latitudeRadius: 0.025, longitudeRadius: 0.055, phase: 0.2, angularSpeed: 0.018, users: 4 },
+  { id: 'gdansk-roadstead', name: 'Reda Gdańska', latitude: 54.43, longitude: 18.72, latitudeRadius: 0.035, longitudeRadius: 0.09, phase: 2.1, angularSpeed: 0.014, users: 9 },
+  { id: 'gulf-of-gdansk', name: 'Zatoka Gdańska', latitude: 54.66, longitude: 18.84, latitudeRadius: 0.05, longitudeRadius: 0.12, phase: 4.2, angularSpeed: 0.01, users: 18 },
 ];
+
+export const demoVesselDefinitions: DemoVesselDefinition[] = demoFleets.flatMap((fleet, fleetIndex) =>
+  Array.from({ length: fleet.users }, (_, vesselIndex) => {
+    const serial = fleetIndex * 100 + vesselIndex + 1;
+    return {
+      userId: `10000000-0000-4000-8000-${String(serial).padStart(12, '0')}`,
+      vesselId: `demo-${fleet.id}-${vesselIndex + 1}`,
+      displayName: `${fleet.name} ${vesselIndex + 1}`,
+      email: `demo.${fleet.id}.${vesselIndex + 1}@example.invalid`,
+    };
+  }),
+);
 
 function isInside(bounds: Bounds, latitude: number, longitude: number) {
   return latitude >= bounds.south && latitude <= bounds.north
     && longitude >= bounds.west && longitude <= bounds.east;
 }
 
-export function demoTrafficPoints(bounds: Bounds): DemoTrafficPoint[] {
-  const now = new Date().toISOString();
-  return demoClusters.flatMap((cluster, clusterIndex) => Array.from({ length: cluster.users }, (_, index) => {
-    // Golden-angle scatter avoids the artificial rings produced by evenly
-    // spacing every demo vessel on a circle.
-    const angle = index * Math.PI * (3 - Math.sqrt(5)) + clusterIndex * 0.71;
-    const radius = 0.003 + Math.sqrt((index + 1) / cluster.users) * 0.014;
-    return {
-      vesselId: `demo-${cluster.id}-${index}`,
-      longitude: cluster.longitude + Math.cos(angle) * radius * 1.35,
-      latitude: cluster.latitude + Math.sin(angle) * radius * 0.8,
-      accuracy: 12,
-      speed: 1.8 + (index % 5) * 0.7,
-      heading: Math.round((angle * 180 / Math.PI + 90) % 360),
-      recordedAt: now,
-    };
-  })).filter((point) => isInside(bounds, point.latitude, point.longitude));
+function fleetCenter(fleet: DemoFleet, tick: number) {
+  const angle = fleet.phase + tick * fleet.angularSpeed;
+  return {
+    angle,
+    latitude: fleet.latitude + Math.sin(angle) * fleet.latitudeRadius,
+    longitude: fleet.longitude + Math.cos(angle) * fleet.longitudeRadius,
+  };
 }
 
-export function demoTrafficCells(bounds: Bounds, zoom: number) {
+export function demoTrafficPoints(bounds: Bounds, tick = 0, recordedAt = new Date()): DemoTrafficPoint[] {
+  let definitionOffset = 0;
+  return demoFleets.flatMap((fleet) => {
+    const center = fleetCenter(fleet, tick);
+    const definitions = demoVesselDefinitions.slice(definitionOffset, definitionOffset + fleet.users);
+    definitionOffset += fleet.users;
+    return definitions.map((definition, index) => {
+      const scatterAngle = index * Math.PI * (3 - Math.sqrt(5)) + tick * 0.004;
+      const scatterRadius = 0.002 + Math.sqrt((index + 1) / fleet.users) * 0.01;
+      const longitude = center.longitude + Math.cos(scatterAngle) * scatterRadius * 1.3;
+      const latitude = center.latitude + Math.sin(scatterAngle) * scatterRadius * 0.75;
+      const eastVelocity = -Math.sin(center.angle) * fleet.longitudeRadius;
+      const northVelocity = Math.cos(center.angle) * fleet.latitudeRadius;
+      return {
+        vesselId: definition.vesselId,
+        displayName: definition.displayName,
+        longitude,
+        latitude,
+        accuracy: 8 + index % 5,
+        speed: 1.8 + index % 6 * 0.45,
+        heading: Math.round((Math.atan2(eastVelocity, northVelocity) * 180 / Math.PI + 360) % 360),
+        recordedAt: recordedAt.toISOString(),
+      };
+    }).filter((point) => isInside(bounds, point.latitude, point.longitude));
+  });
+}
+
+export function demoTrafficCells(bounds: Bounds, zoom: number, tick = 0) {
   const gridSize = gridSizeForZoom(zoom);
-  return demoClusters.filter((cluster) => isInside(bounds, cluster.latitude, cluster.longitude)).flatMap((cluster) => {
-    const level = trafficLevel(cluster.users);
+  return demoFleets.flatMap((fleet) => {
+    const center = fleetCenter(fleet, tick);
+    if (!isInside(bounds, center.latitude, center.longitude)) return [];
+    const level = trafficLevel(fleet.users);
     if (!level) return [];
     return [{
-      longitude: Math.floor(cluster.longitude / gridSize) * gridSize + gridSize / 2,
-      latitude: Math.floor(cluster.latitude / gridSize) * gridSize + gridSize / 2,
-      weight: Math.min(1, cluster.users / 16),
-      sampleCount: cluster.users * 3,
-      uniqueUsers: cluster.users,
+      longitude: Math.floor(center.longitude / gridSize) * gridSize + gridSize / 2,
+      latitude: Math.floor(center.latitude / gridSize) * gridSize + gridSize / 2,
+      weight: Math.min(1, fleet.users / 16),
+      sampleCount: fleet.users * 3,
+      uniqueUsers: fleet.users,
       level,
     }];
   });

@@ -5,7 +5,6 @@ import { asyncHandler } from '../../common/async-handler.js';
 import { bboxSchema } from '../../common/geo.js';
 import { env } from '../../config/env.js';
 import { gridSizeForZoom } from './traffic.service.js';
-import { demoTrafficCells, demoTrafficPoints } from './traffic.demo.js';
 
 const trafficBounds = bboxSchema.and(z.object({
   from: z.coerce.date().optional(),
@@ -20,7 +19,8 @@ export function trafficRouter(context: AppContext): Router {
     const from = query.from ?? new Date(Date.now() - 5 * 60_000);
     const to = query.to ?? new Date();
     if (env.TRAFFIC_DEMO_MODE) {
-      response.json({ items: demoTrafficPoints(bounds), calculatedAt: new Date().toISOString(), demo: true });
+      const simulation = context.trafficSimulation.status();
+      response.json({ items: context.trafficSimulation.points(bounds), calculatedAt: simulation.calculatedAt, demo: true, simulation });
       return;
     }
     const rows = await context.dataSource.query<Array<Record<string, unknown>>>(`
@@ -30,9 +30,7 @@ export function trafficRouter(context: AppContext): Router {
         round(ST_X(ls.location)::numeric, $1)::double precision AS longitude,
         ls.speed, ls.heading, ls.accuracy, ls.recorded_at AS "recordedAt"
       FROM location_samples ls
-      JOIN users u ON u.id = ls.user_id
-      WHERE u.location_consent = true AND u.share_active_position = true
-        AND ls.recorded_at BETWEEN $2 AND $3
+      WHERE ls.recorded_at BETWEEN $2 AND $3
         AND ls.location && ST_MakeEnvelope($4, $5, $6, $7, 4326)
       ORDER BY ls.user_id, ls.recorded_at DESC
       LIMIT 1000
@@ -46,9 +44,10 @@ export function trafficRouter(context: AppContext): Router {
     const to = query.to ?? new Date();
     const grid = gridSizeForZoom(query.zoom);
     if (env.TRAFFIC_DEMO_MODE) {
+      const simulation = context.trafficSimulation.status();
       response.json({
-        items: demoTrafficCells(bounds, query.zoom), calculatedAt: new Date().toISOString(), minimumUsers: env.TRAFFIC_MIN_USERS,
-        demo: true, debug: { gridSize: grid, privacyThreshold: env.TRAFFIC_MIN_USERS, bucketMinutes: 5 },
+        items: context.trafficSimulation.cells(bounds, query.zoom), calculatedAt: simulation.calculatedAt, minimumUsers: env.TRAFFIC_MIN_USERS,
+        demo: true, simulation, debug: { gridSize: grid, privacyThreshold: env.TRAFFIC_MIN_USERS, bucketMinutes: 5 },
       });
       return;
     }

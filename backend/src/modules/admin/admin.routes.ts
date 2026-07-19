@@ -3,10 +3,23 @@ import { z } from 'zod';
 import type { AppContext } from '../../app-context.js';
 import { asyncHandler } from '../../common/async-handler.js';
 import { AppError } from '../../common/errors.js';
+import { env } from '../../config/env.js';
+import { ensureDemoAccounts } from '../../database/demo.seed.js';
 import { Alert, AlertStatus, Port, PortManager, PortStatus, User, UserRole } from '../../database/entities.js';
 
 export function adminRouter(context: AppContext): Router {
   const router = Router();
+  router.get('/traffic-simulation', (_request, response) => {
+    response.json(context.trafficSimulation.status());
+  });
+  router.post('/traffic-simulation/reset', asyncHandler(async (_request, response) => {
+    if (!env.TRAFFIC_DEMO_MODE) throw new AppError(409, 'TRAFFIC_SIMULATION_DISABLED', 'Traffic simulation is disabled in this environment.');
+    if (env.DEMO_ADMIN_ENABLED) await ensureDemoAccounts(context.dataSource);
+    response.json(context.trafficSimulation.resetAndStart());
+  }));
+  router.post('/traffic-simulation/stop', (_request, response) => {
+    response.json(context.trafficSimulation.stop());
+  });
   router.get('/users', asyncHandler(async (request, response) => {
     const { search } = z.object({ search: z.string().trim().max(320).optional() }).parse(request.query);
     const builder = context.dataSource.getRepository(User).createQueryBuilder('user')
