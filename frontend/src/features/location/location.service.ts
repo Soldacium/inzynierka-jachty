@@ -19,7 +19,7 @@ export async function startTracking(): Promise<TrackingStartResult> {
       pausesUpdatesAutomatically: false,
       showsBackgroundLocationIndicator: true,
       foregroundService: {
-        notificationTitle: 'Na Fali — udostępnianie pozycji',
+        notificationTitle: 'Boja — udostępnianie pozycji',
         notificationBody: 'Anonimowa pozycja łodzi jest aktualizowana w tle.',
         notificationColor: '#0369A1',
       },

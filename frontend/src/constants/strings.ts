@@ -1,5 +1,5 @@
 export const strings = {
-  appName: 'Na Fali',
+  appName: 'Boja',
   navigationDisclaimer: 'Informacje w aplikacji mają charakter pomocniczy. Nie zastępują map ani certyfikowanych systemów nawigacyjnych.',
   offline: 'Brak połączenia. Wyświetlane dane mogą być nieaktualne.',
   retry: 'Spróbuj ponownie',

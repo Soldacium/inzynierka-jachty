@@ -77,5 +77,17 @@ export function trafficRouter(context: AppContext): Router {
     `, [grid, from, to, query.west, query.south, query.east, query.north, env.TRAFFIC_MIN_USERS]);
     response.json({ items: rows, calculatedAt: new Date().toISOString(), minimumUsers: env.TRAFFIC_MIN_USERS });
   }));
+  router.get('/historical-ais', asyncHandler(async (request, response) => {
+    const query = bboxSchema.and(z.object({ zoom: z.coerce.number().min(1).max(22) }))
+      .refine((value) => value.north !== undefined, 'Bounding box is required.')
+      .parse(request.query);
+    const result = await context.historicalAis.cells({
+      north: query.north!,
+      south: query.south!,
+      east: query.east!,
+      west: query.west!,
+    }, query.zoom);
+    response.json(result);
+  }));
   return router;
 }

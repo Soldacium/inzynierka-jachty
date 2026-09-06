@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { AuthTokens } from '@/src/types/api';
 
-const key = 'na-fali.session.v1';
+const key = 'boja.session.v1';
 let memorySession: AuthTokens | null = null;
 
 export async function getSessionTokens(): Promise<AuthTokens | null> {

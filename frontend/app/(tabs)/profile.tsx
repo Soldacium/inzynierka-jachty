@@ -6,6 +6,7 @@ import { useRoutes } from '@/src/features/data/hooks';
 import { useAuthStore } from '@/src/stores/auth.store';
 import { useTrackingStore } from '@/src/stores/tracking.store';
 import { spacing } from '@/src/constants/theme';
+import { strings } from '@/src/constants/strings';
 import { formatDate, formatDistance } from '@/src/utils/format';
 import { useMapStore } from '@/src/stores/map.store';
 
@@ -26,7 +27,7 @@ export default function ProfileScreen() {
     {user.role === 'port_manager' || user.role === 'admin' ? <Button title="Otwórz panel portu" onPress={() => router.push('/manager')} /> : null}
     <View style={styles.headingRow}><Subtitle>Zapisane trasy</Subtitle><Button title="Nowa" onPress={() => router.push('/routes/planner')} variant="secondary" /></View>
     {routes.isError ? <ErrorState message="Nie udało się pobrać tras." retry={() => void routes.refetch()} /> : routes.data?.items.length ? routes.data.items.map((route) => <Card key={route.id} onPress={() => router.push({ pathname: '/routes/[id]', params: { id: route.id } })}><Subtitle>{route.name}</Subtitle><Body>{formatDistance(route.distanceMeters)}</Body><Body muted>Aktualizacja: {formatDate(route.updatedAt)}</Body></Card>) : <EmptyState message="Nie masz zapisanych tras." />}
-    <Body muted>{'Na Fali'} nie jest certyfikowanym systemem nawigacyjnym.</Body><Button title="Wyloguj się" onPress={() => void logout()} variant="secondary" />
+    <Body muted>{strings.appName} nie jest certyfikowanym systemem nawigacyjnym.</Body><Button title="Wyloguj się" onPress={() => void logout()} variant="secondary" />
   </Screen>;
 }
 const styles = StyleSheet.create({ flex: { flex: 1 }, headingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md } });

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type MapOverlay = 'route' | 'vessels' | 'traffic' | 'alerts';
+export type MapOverlay = 'route' | 'vessels' | 'traffic' | 'historical' | 'alerts';
 export type AlertFilter = 'all' | 'official' | 'user';
 export type MapStyleChoice = 'detailed' | 'simple';
 interface MapState {

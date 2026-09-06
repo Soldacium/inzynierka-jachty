@@ -12,5 +12,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
+COPY data ./data
 USER node
 CMD ["node", "dist/src/server.js"]

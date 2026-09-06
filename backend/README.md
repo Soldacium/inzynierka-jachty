@@ -51,6 +51,7 @@ Wszystkie chronione endpointy przyjmują `Authorization: Bearer <accessToken>`. 
 - `/routes`: zapisane trasy, punkty i obiekty w pobliżu trasy.
 - `/locations/batch`: idempotentny zapis partii GPS.
 - `/traffic/points` i `/traffic/heatmap`: pozycje z ochroną prywatności i agregaty ruchu.
+- `/traffic/historical-ais`: osobna warstwa rocznej intensywności AIS HELCOM z 2024 r., filtrowana i normalizowana względem viewportu; nie przedstawia bieżących pozycji jednostek.
 - `/alerts`: zgłoszenia i moderacja ostrzeżeń.
 - `/conversations`: rozmowy, wiadomości i status przeczytania.
 - `/admin`: blokowanie kont, zatwierdzanie portów, przypisania managerów i moderacja.

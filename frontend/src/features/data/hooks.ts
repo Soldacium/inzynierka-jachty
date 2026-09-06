@@ -1,6 +1,6 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, queryString } from '@/src/api/client';
-import type { Alert, AlertSource, ApiList, Conversation, MapBounds, Message, Port, PortNotice, SailRoute, TrafficCell, TrafficPoint, TrafficResponse, TrafficSimulationStatus } from '@/src/types/api';
+import type { Alert, AlertSource, ApiList, Conversation, HistoricalAisResponse, MapBounds, Message, Port, PortNotice, SailRoute, TrafficCell, TrafficPoint, TrafficResponse, TrafficSimulationStatus } from '@/src/types/api';
 
 async function getAllPages<T>(path: string, parameters: Record<string, string | number | undefined>): Promise<ApiList<T>> {
   const items: T[] = [];
@@ -69,6 +69,16 @@ export function useTraffic(bounds: MapBounds, mode: 'points' | 'heatmap', enable
     queryFn: () => api.get<TrafficResponse<TrafficPoint | TrafficCell>>(`${endpoint}${queryString({ ...bounds })}`),
     enabled,
     refetchInterval: mode === 'points' ? 30_000 : 120_000,
+  });
+}
+
+export function useHistoricalAis(bounds: MapBounds, enabled = true) {
+  return useQuery({
+    queryKey: ['traffic', 'historical-ais', bounds],
+    queryFn: () => api.get<HistoricalAisResponse>(`/traffic/historical-ais${queryString({ ...bounds })}`),
+    enabled,
+    placeholderData: keepPreviousData,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 }
 

@@ -9,7 +9,7 @@ interface QueueRow {
 
 let database: Promise<SQLite.SQLiteDatabase> | null = null;
 async function db() {
-  database ??= SQLite.openDatabaseAsync('na-fali-location.db').then(async (connection) => {
+  database ??= SQLite.openDatabaseAsync('boja-location.db').then(async (connection) => {
     await connection.execAsync(`PRAGMA journal_mode = WAL;
       CREATE TABLE IF NOT EXISTS location_queue (
         id TEXT PRIMARY KEY NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL,

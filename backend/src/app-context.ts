@@ -5,6 +5,7 @@ import { TokenService } from './modules/auth/token.service.js';
 import type { MailService } from './services/mail.service.js';
 import { SmtpMailService } from './services/mail.service.js';
 import { TrafficSimulationService } from './modules/traffic/traffic-simulation.service.js';
+import { HistoricalAisService } from './modules/traffic/historical-ais.service.js';
 
 export interface RealtimePublisher {
   emitToRoom(room: string, event: string, data: unknown): void;
@@ -14,6 +15,7 @@ export class AppContext {
   readonly tokenService = new TokenService();
   readonly authService: AuthService;
   readonly trafficSimulation: TrafficSimulationService;
+  readonly historicalAis = new HistoricalAisService();
   io?: SocketServer;
 
   constructor(

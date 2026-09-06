@@ -1,0 +1,18 @@
+{
+  "provider": "HELCOM",
+  "dataset": "HELCOM AIS Shipping density maps",
+  "year": 2024,
+  "shipType": "all",
+  "metric": "ship trips crossing a 1 x 1 km grid cell",
+  "resolutionMeters": 1000,
+  "sourceCrs": "EPSG:3035",
+  "outputCrs": "EPSG:4326",
+  "sourceUrl": "https://metadata.helcom.fi/geonetwork/srv/api/records/2558244b-0cea-46e9-8053-af6ef5d01853",
+  "downloadUrl": "https://maps.helcom.fi/website/download/Shipping_traffic_intensity/2024.zip",
+  "attribution": "HELCOM AIS Shipping density maps (2024)",
+  "sourceFile": "all_shiptypes_all_months2024.tif",
+  "sourceSha256": "4ef9ff1d9af7cbc184daa09ff2e4bbdd24b5724bd628ed7837a4ddfada60482e",
+  "recordCount": 362564,
+  "minimumTrips": 1,
+  "maximumTrips": 34848
+}

@@ -1,0 +1,1 @@
+export const HISTORICAL_AIS_MAX_DISPLAY_ZOOM = 10;

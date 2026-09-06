@@ -36,7 +36,7 @@ async function fetchPorts(): Promise<OverpassElement[]> {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
-      'user-agent': 'NaFaliPortImporter/1.0 (local one-off import)',
+      'user-agent': 'BojaPortImporter/1.0 (local one-off import)',
     },
     body: new URLSearchParams({ data: query }),
   });

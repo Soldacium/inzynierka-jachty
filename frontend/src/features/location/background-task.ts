@@ -2,7 +2,7 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { enqueueLocations, flushLocationQueue } from './location-queue';
 
-export const LOCATION_TASK = 'na-fali-active-voyage-location';
+export const LOCATION_TASK = 'boja-active-voyage-location';
 const locationSampleIntervalMs = 60_000;
 const locationUploadIntervalMs = 60_000;
 let lastLocationSampleAt = 0;

@@ -3,8 +3,9 @@ import { Camera, GeoJSONSource, Layer, Map, Marker, UserLocation, type CameraRef
 import { Ionicons } from '@expo/vector-icons';
 import type { FeatureCollection, LineString, Point } from 'geojson';
 import { Pressable, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
-import type { Alert, MapBounds, Port, SailRoute, TrafficCell, TrafficPoint } from '@/src/types/api';
+import type { Alert, HistoricalAisCell, MapBounds, Port, SailRoute, TrafficCell, TrafficPoint } from '@/src/types/api';
 import { formatDate, formatDistance } from '@/src/utils/format';
+import { HISTORICAL_AIS_MAX_DISPLAY_ZOOM } from './historical-ais.constants';
 
 const alertNames: Record<string, string> = {
   obstacle: 'Przeszkoda', failure: 'Awaria', port_disruption: 'Utrudnienie w porcie', accident: 'Wypadek',
@@ -13,8 +14,8 @@ const alertNames: Record<string, string> = {
 const alertSeverityNames: Record<string, string> = { low: 'niski', medium: 'średni', high: 'wysoki', critical: 'krytyczny' };
 
 interface Props {
-  ports: Port[]; alerts: Alert[]; traffic: (TrafficPoint | TrafficCell)[]; route?: SailRoute;
-  activeOverlay: 'route' | 'vessels' | 'traffic' | 'alerts';
+  ports: Port[]; alerts: Alert[]; traffic: (TrafficPoint | TrafficCell | HistoricalAisCell)[]; route?: SailRoute;
+  activeOverlay: 'route' | 'vessels' | 'traffic' | 'historical' | 'alerts';
   focusCoordinate?: [number, number] | null; onBounds: (bounds: MapBounds) => void;
   selectedPortId: string | null; selectedPortDistance?: number | null;
   selectedAlertId: string | null; onAlert: (id: string) => void;
@@ -69,6 +70,15 @@ export function MarineMap(props: Props) {
         'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 5, 32, 10, 52, 15, 72],
         'heatmap-opacity': 0.78,
         'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(34,197,94,0)', 0.12, 'rgba(34,197,94,0.65)', 0.35, '#84CC16', 0.55, '#FACC15', 0.76, '#F97316', 1, '#DC2626'],
+      }} />
+    </GeoJSONSource> : null}
+    {props.activeOverlay === 'historical' ? <GeoJSONSource id="historical-ais-source" data={trafficData}>
+      <Layer id="historical-ais-heatmap" type="heatmap" source="historical-ais-source" maxzoom={HISTORICAL_AIS_MAX_DISPLAY_ZOOM} paint={{
+        'heatmap-weight': ['get', 'weight'],
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 4, 0.45, 8, 0.62, 10, 0.78],
+        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 9, 10, 15],
+        'heatmap-opacity': 0.74,
+        'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(37,99,235,0)', 0.16, 'rgba(37,99,235,0.45)', 0.38, '#06B6D4', 0.62, '#A3E635', 0.82, '#F59E0B', 1, '#E11D48'],
       }} />
     </GeoJSONSource> : null}
     {props.activeOverlay === 'vessels' ? <GeoJSONSource id="vessels-source" data={trafficData}>

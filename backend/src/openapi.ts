@@ -28,6 +28,7 @@ export const openapi = {
     '/locations/batch': { post: { summary: 'Store a batch of GPS samples', responses: { '202': { description: 'Accepted' } } } },
     '/traffic/points': { get: { summary: 'Privacy-filtered active positions', responses: { '200': { description: 'Positions' } } } },
     '/traffic/heatmap': { get: { summary: 'Aggregated traffic cells', responses: { '200': { description: 'Heatmap cells' } } } },
+    '/traffic/historical-ais': { get: { summary: 'Historical HELCOM AIS density cells for the map viewport', responses: { '200': { description: 'Historical AIS cells and source metadata' } } } },
     '/admin/traffic-simulation': { get: { summary: 'Get demo traffic simulation status', responses: { '200': { description: 'Simulation status' } } } },
     '/admin/traffic-simulation/reset': { post: { summary: 'Reset and start demo traffic simulation', responses: { '200': { description: 'Simulation started' } } } },
     '/admin/traffic-simulation/stop': { post: { summary: 'Stop demo traffic simulation', responses: { '200': { description: 'Simulation stopped' } } } },

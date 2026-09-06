@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "migration:run": "tsx src/database/migrate.ts",
     "ports:import": "tsx src/jobs/import-ports.ts",
+    "historical-ais:import": "tsx src/jobs/import-historical-ais.ts",
     "migration:revert": "typeorm-ts-node-esm migration:revert -d src/database/data-source.ts"
   },
   "dependencies": {
@@ -44,6 +45,8 @@
     "@types/nodemailer": "^7.0.4",
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
+    "geotiff": "^3.0.5",
+    "proj4": "^2.21.0",
     "supertest": "^7.1.4",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",

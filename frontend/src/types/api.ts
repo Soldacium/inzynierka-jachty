@@ -52,6 +52,30 @@ export interface TrafficPoint {
 export interface TrafficCell {
   latitude: number; longitude: number; weight: number; sampleCount: number; uniqueUsers: number; level: 'low' | 'medium' | 'high';
 }
+export interface HistoricalAisCell {
+  latitude: number; longitude: number; weight: number; tripCount: number; level: 'low' | 'medium' | 'high';
+}
+export interface HistoricalAisMetadata {
+  provider: string; dataset: string; year: number; shipType: string; metric: string; resolutionMeters: number;
+  sourceCrs: string; outputCrs: string; sourceUrl: string; downloadUrl: string; attribution: string;
+  sourceFile: string; sourceSha256: string; recordCount: number; minimumTrips: number; maximumTrips: number;
+}
+export interface HistoricalAisResponse {
+  items: HistoricalAisCell[];
+  metadata: HistoricalAisMetadata;
+  available: boolean;
+  maxDisplayZoom: number;
+  unavailableReason?: 'zoom_too_high';
+  normalization?: {
+    mode: 'viewport_percentile';
+    sourceCellCount: number;
+    visibleCellCount: number;
+    lowerPercentile: number;
+    upperPercentile: number;
+    lowerTripCount: number;
+    upperTripCount: number;
+  };
+}
 export interface TrafficResponse<T> {
   items: T[]; calculatedAt: string; minimumUsers?: number; demo?: boolean;
   simulation?: TrafficSimulationStatus;
