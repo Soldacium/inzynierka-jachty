@@ -1,6 +1,6 @@
-# Bałtyk
+# Boja
 
-Uruchom backend, bazę i usługi pomocnicze, a następnie aplikację mobilną:
+Uruchomienie aplikacji:
 
 ```bash
 docker compose up -d && npm --prefix frontend run start -- --dev-client --android
